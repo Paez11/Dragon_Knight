@@ -12,12 +12,17 @@ public class Movement : MonoBehaviour
     //Movement
     public float moveSpeed;
     public float JumpForce;
-    private bool grounded;
+    private bool doubleJump;
+    private bool isJumping;
     private float moveHorizontal;
     private float moveVertical;
 
     //physics
     private Rigidbody2D rb2D;
+    private BoxCollider2D boxCollider;
+    
+    //layers
+    public LayerMask groundcap;
 
     //collisions
     private Vector2 moveInput;
@@ -30,12 +35,13 @@ public class Movement : MonoBehaviour
 
     // Start is called before the first frame update
     void Start(){
-        rb2D = GetComponent<Rigidbody2D>();
+        rb2D = gameObject.GetComponent<Rigidbody2D>();
+        boxCollider = GetComponent<BoxCollider2D>();
         animator = GetComponent<Animator>();
         //Camera.main.GetComponent<AudioSource>().PlayOneShot(landSound);
         moveSpeed = 6;
         JumpForce = 250;
-        grounded = false;
+        isJumping = false;
     }
 
     // Update is called once per frame
@@ -43,33 +49,21 @@ public class Movement : MonoBehaviour
         moveHorizontal = Input.GetAxisRaw("Horizontal");
         moveVertical = Input.GetAxisRaw("Vertical");
 
-
         //Movement translation
-        if ( moveHorizontal < 0.1f){
+        if ( moveHorizontal < 0.0f){
             transform.localScale = new Vector3(-0.94f,0.79f,1.0f);
-        }else if (moveHorizontal > 0.1f){
+        }else if (moveHorizontal > 0.0f){
             transform.localScale = new Vector3(0.94f,0.79f,1.0f);
         }
-        animator.SetBool("running",moveHorizontal != 0.0f);
 
-
-        //Jump
-        Debug.DrawRay(transform.position, Vector3.down * 1f, Color.red);
-        if(Physics2D.Raycast(transform.position, Vector3.down, 1f)){
-            grounded = true;
-            animator.SetBool("jumping",false);
-        }else{
-            grounded = false;
-            animator.SetBool("jumping",true);
-        }
-
-        if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)) && grounded){
+        if (Input.GetKeyDown(KeyCode.W) && isGrounded()){
             Jump();
             Camera.main.GetComponent<AudioSource>().PlayOneShot(jumpSound);
         }
 
+
         //Run sound
-        if (!grounded || this.GetComponent<Rigidbody2D>().velocity.x == 0){
+        if (!isGrounded() || this.GetComponent<Rigidbody2D>().velocity.x == 0){
             StopRunSound();
         }else{
             this.GetComponent<AudioSource>().pitch = Mathf.Clamp(this.GetComponent<Rigidbody2D>().velocity.magnitude,1f,1.8f);
@@ -81,39 +75,18 @@ public class Movement : MonoBehaviour
     // Same as update but sincronize with the frames that can be lost
     private void FixedUpdate() {
         rb2D.velocity = new Vector2(moveHorizontal * moveSpeed, rb2D.velocity.y);
-        /*
-        bool success = MovePlayer(moveInput);
+        animator.SetBool("running",moveHorizontal != 0.0f);
+    }
 
-        if (!success){
-            success = MovePlayer(new Vector2(moveInput.x, 0));
-        }
-        */
+    private bool isGrounded(){
+        RaycastHit2D raycastHit2D = Physics2D.BoxCast(boxCollider.bounds.center, 
+        new Vector2(boxCollider.bounds.size.x, boxCollider.bounds.size.y), 0f, Vector2.down, 0.2f, groundcap);    
+        return raycastHit2D.collider != null;
     }
 
     private void Jump(){
-        rb2D.AddForce(Vector2.up * JumpForce);
+        rb2D.AddForce(Vector2.up * JumpForce,ForceMode2D.Impulse);
     }
-
-    public bool MovePlayer(Vector2 direction){
-        
-        //Check for potential collitions
-        int count = rb2D.Cast(direction, movementFilter, castCollisions, moveSpeed * Time.fixedDeltaTime + collisionOffSet);
-
-        if (count == 0){
-            Vector2 moveVector = direction * moveSpeed * Time.fixedDeltaTime;
-
-            //No collisions
-            rb2D.MovePosition(rb2D.position + moveVector);
-            return true;
-        }else{
-            //Print collisions
-            foreach (RaycastHit2D hit in castCollisions){
-                print(hit.ToString());
-            }
-            return false;
-        }
-    }
-
 
     //Sounds
     private void StopRunSound(){
