@@ -8,7 +8,7 @@ public class MainCamera : MonoBehaviour
 
 
     // Update is called once per frame
-    void Update(){
+    void FixedUpdate(){
 
         if ( player != null){
             Vector3 position = transform.position;
