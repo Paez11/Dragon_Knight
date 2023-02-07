@@ -40,12 +40,12 @@ public class Movement : MonoBehaviour
         animator = GetComponent<Animator>();
         //Camera.main.GetComponent<AudioSource>().PlayOneShot(landSound);
         moveSpeed = 6;
-        JumpForce = 250;
+        JumpForce = 15;
         isJumping = false;
     }
 
-    // Update is called once per frame
-    void Update(){
+    // Same as update but sincronize with the frames that can be lost
+    void FixedUpdate() {
         moveHorizontal = Input.GetAxisRaw("Horizontal");
         moveVertical = Input.GetAxisRaw("Vertical");
 
@@ -56,8 +56,10 @@ public class Movement : MonoBehaviour
             transform.localScale = new Vector3(0.94f,0.79f,1.0f);
         }
 
+        Debug.DrawRay(transform.position, Vector3.down*1f, Color.red);
         if (Input.GetKeyDown(KeyCode.W) && isGrounded()){
             Jump();
+            Debug.Log("salta");
             Camera.main.GetComponent<AudioSource>().PlayOneShot(jumpSound);
         }
 
@@ -70,17 +72,14 @@ public class Movement : MonoBehaviour
             //this.GetComponent<AudioSource>().panStereo = Mathf.Clamp(this.GetComponent<Transform>().position.x/10,-1,1);
             PlayRunSound();
         }
-    }
 
-    // Same as update but sincronize with the frames that can be lost
-    private void FixedUpdate() {
         rb2D.velocity = new Vector2(moveHorizontal * moveSpeed, rb2D.velocity.y);
         animator.SetBool("running",moveHorizontal != 0.0f);
     }
 
     private bool isGrounded(){
         RaycastHit2D raycastHit2D = Physics2D.BoxCast(boxCollider.bounds.center, 
-        new Vector2(boxCollider.bounds.size.x, boxCollider.bounds.size.y), 0f, Vector2.down, 0.2f, groundcap);    
+        new Vector2(boxCollider.bounds.size.x, boxCollider.bounds.size.y), 0f, Vector2.down, 2f, groundcap);    
         return raycastHit2D.collider != null;
     }
 
