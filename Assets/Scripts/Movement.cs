@@ -55,14 +55,15 @@ public class Movement : MonoBehaviour
         }else if (moveHorizontal > 0.0f){
             transform.localScale = new Vector3(0.94f,0.79f,1.0f);
         }
-
+        
         Debug.DrawRay(transform.position, Vector3.down*1f, Color.red);
         if (Input.GetKeyDown(KeyCode.W) && isGrounded()){
             Jump();
-            Debug.Log("salta");
+            animator.SetBool("jumping",true);
             Camera.main.GetComponent<AudioSource>().PlayOneShot(jumpSound);
+        }else if(isGrounded()){
+            animator.SetBool("jumping",false);
         }
-
 
         //Run sound
         if (!isGrounded() || this.GetComponent<Rigidbody2D>().velocity.x == 0){
@@ -79,7 +80,7 @@ public class Movement : MonoBehaviour
 
     private bool isGrounded(){
         RaycastHit2D raycastHit2D = Physics2D.BoxCast(boxCollider.bounds.center, 
-        new Vector2(boxCollider.bounds.size.x, boxCollider.bounds.size.y), 0f, Vector2.down, 2f, groundcap);    
+        new Vector2(boxCollider.bounds.size.x, boxCollider.bounds.size.y), 0f, Vector2.down, 0.2f, groundcap);  
         return raycastHit2D.collider != null;
     }
 
